@@ -65,12 +65,28 @@ let tasks = [
         status: 'completed',
         createdAt: new Date('2024-01-15').toISOString()
     },
+     {
+        id: 1,
+        title: 'Website',
+        description: 'Create Frontend',
+        assignedTo: 1,
+        status: 'pending',
+        createdAt: new Date('2024-01-15').toISOString()
+    },
     {
         id: 2,
         title: 'Design Database Schema',
         description: 'Create ER diagram for the application',
         assignedTo: 2,
         status: 'in-progress',
+        createdAt: new Date('2024-01-20').toISOString()
+    },
+    {
+        id: 2,
+        title: 'app',
+        description: 'Create design',
+        assignedTo: 2,
+        status: 'completed',
         createdAt: new Date('2024-01-20').toISOString()
     },
     {
