@@ -1,13 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const PORT = 5000;
+const port = 5000;
 
-// Middleware
+
 app.use(cors());
 app.use(express.json());
 
-// Mock database - In-memory storage for users
+
 let users = [
     {
         id: 1,
@@ -16,7 +16,7 @@ let users = [
         password: 'admin123',
         role: 'admin',
         token: 'mock-admin-token-123',
-        employeeId: null  // Admins don't have employee records
+        employeeId: null
     },
     {
         id: 2,
@@ -25,7 +25,7 @@ let users = [
         password: 'johndoe123',
         role: 'employee',
         token: 'mock-employee-token-456',
-        employeeId: 1  // Links to employee ID 1 in employees array
+        employeeId: 1
     },
     {
         id: 3,
@@ -34,14 +34,25 @@ let users = [
         password: 'janesmith123',
         role: 'employee',
         token: 'mock-employee-token-789',
-        employeeId: 2  // Links to employee ID 2 in employees array
+        employeeId: 2
+    },
+    {
+        id: 4,
+        name: 'Alex Brown',
+        email: 'alex@gmail.com',
+        password: 'alex123',
+        role: 'employee',
+        token: 'token_alex_003',
+        employeeId: 3
     }
 ];
 
 // Mock database - Employees
 let employees = [
     { id: 1, name: 'John Doe', email: 'johndoe@example.com', role: 'employee' },
-    { id: 2, name: 'Jane Smith', email: 'janesmith@example.com', role: 'employee' }
+    { id: 2, name: 'Jane Smith', email: 'janesmith@example.com', role: 'employee' },
+    { id: 3, name: 'Alex Brown', email: 'alex@gmail.com', role: 'employee' }
+
 ];
 
 // Mock database - Tasks
@@ -61,10 +72,18 @@ let tasks = [
         assignedTo: 2,
         status: 'in-progress',
         createdAt: new Date('2024-01-20').toISOString()
+    },
+    {
+        id: 3,
+        title: 'Design Website',
+        description: 'Create design through figma',
+        assignedTo: 3,
+        status: 'in-progress',
+        createdAt: new Date('2024-01-20').toISOString()
     }
 ];
 
-// Helper functions
+
 const generateId = (array) => {
     return array.length > 0 ? Math.max(...array.map(item => item.id)) + 1 : 1;
 };
@@ -73,13 +92,12 @@ const generateToken = (email, role) => {
     return `mock-${role}-token-${Date.now()}`;
 };
 
-// GET all users (for debugging)
 app.get('/api/users', (req, res) => {
     const sanitizedUsers = users.map(({ password, ...user }) => user);
     res.json(sanitizedUsers);
 });
 
-// POST login - Validate credentials with role check
+
 app.post('/api/login', (req, res) => {
     const { email, password, expectedRole } = req.body;
 
@@ -107,12 +125,12 @@ app.post('/api/login', (req, res) => {
         });
     }
 
-    // Return user data without password, ensuring employeeId is included
+
     const { password: _, ...userWithoutPassword } = user;
     res.json(userWithoutPassword);
 });
 
-// POST register - Create new user
+
 app.post('/api/register', (req, res) => {
     const { name, email, password, role } = req.body;
 
@@ -156,7 +174,6 @@ app.post('/api/register', (req, res) => {
     res.status(201).json(userWithoutPassword);
 });
 
-// GET user by ID
 app.get('/api/users/:id', (req, res) => {
     const userId = parseInt(req.params.id);
     const user = users.find(u => u.id === userId);
@@ -169,14 +186,12 @@ app.get('/api/users/:id', (req, res) => {
     res.json(userWithoutPassword);
 });
 
-// ===== EMPLOYEE ENDPOINTS =====
 
-// GET all employees
 app.get('/api/employees', (req, res) => {
     res.json(employees);
 });
 
-// POST create employee
+
 app.post('/api/employees', (req, res) => {
     const { name, email, role } = req.body;
 
@@ -205,7 +220,7 @@ app.post('/api/employees', (req, res) => {
     res.status(201).json(newEmployee);
 });
 
-// PUT update employee
+
 app.put('/api/employees/:id', (req, res) => {
     const employeeId = parseInt(req.params.id);
     const { name, email, role } = req.body;
@@ -225,7 +240,7 @@ app.put('/api/employees/:id', (req, res) => {
         return res.status(400).json({ error: 'Invalid email format' });
     }
 
-    // Check if email exists for another employee
+
     const existingEmployee = employees.find(e => e.email === email && e.id !== employeeId);
     if (existingEmployee) {
         return res.status(409).json({ error: 'Email already exists' });
@@ -241,7 +256,6 @@ app.put('/api/employees/:id', (req, res) => {
     res.json(employees[employeeIndex]);
 });
 
-// DELETE employee (cascade delete tasks)
 app.delete('/api/employees/:id', (req, res) => {
     const employeeId = parseInt(req.params.id);
 
@@ -251,7 +265,7 @@ app.delete('/api/employees/:id', (req, res) => {
         return res.status(404).json({ error: 'Employee not found' });
     }
 
-    // Cascade delete: remove all tasks assigned to this employee
+
     tasks = tasks.filter(t => t.assignedTo !== employeeId);
 
     employees.splice(employeeIndex, 1);
@@ -259,14 +273,12 @@ app.delete('/api/employees/:id', (req, res) => {
     res.json({ message: 'Employee and associated tasks deleted successfully' });
 });
 
-// ===== TASK ENDPOINTS =====
 
-// GET all tasks
 app.get('/api/tasks', (req, res) => {
     res.json(tasks);
 });
 
-// POST create task
+
 app.post('/api/tasks', (req, res) => {
     const { title, description, assignedTo, status } = req.body;
 
@@ -274,7 +286,7 @@ app.post('/api/tasks', (req, res) => {
         return res.status(400).json({ error: 'Title and description are required' });
     }
 
-    // Validate assignedTo exists
+
     if (assignedTo) {
         const employee = employees.find(e => e.id === assignedTo);
         if (!employee) {
@@ -298,7 +310,7 @@ app.post('/api/tasks', (req, res) => {
     res.status(201).json(newTask);
 });
 
-// PUT update task
+
 app.put('/api/tasks/:id', (req, res) => {
     const taskId = parseInt(req.params.id);
     const { title, description, assignedTo, status } = req.body;
@@ -313,7 +325,7 @@ app.put('/api/tasks/:id', (req, res) => {
         return res.status(400).json({ error: 'Title and description are required' });
     }
 
-    // Validate assignedTo exists
+
     if (assignedTo) {
         const employee = employees.find(e => e.id === assignedTo);
         if (!employee) {
@@ -337,7 +349,7 @@ app.put('/api/tasks/:id', (req, res) => {
     res.json(tasks[taskIndex]);
 });
 
-// DELETE task
+
 app.delete('/api/tasks/:id', (req, res) => {
     const taskId = parseInt(req.params.id);
 
@@ -353,12 +365,8 @@ app.delete('/api/tasks/:id', (req, res) => {
 });
 
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`\nPre-configured demo accounts:`);
-    console.log(`Admin: admin@example.com / admin123`);
-    console.log(`Employee: johndoe@example.com / johndoe123`);
-    console.log(`Employee: janesmith@example.com / janesmith123`);
-    console.log(`\nSample data loaded: ${employees.length} employees, ${tasks.length} tasks\n`);
+
+app.listen(port, () => {
+    console.log("Listenting to port number", port)
+    console.log("Successfully connected")
 });
